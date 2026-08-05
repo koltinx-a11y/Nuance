@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUANCE — Administration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,500;0,600;0,700&family=Jost:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2A1B22; --vellum:#EAE1DB; --vellum-2:#F3EEE8; --rouge:#8C2F39; --rouge-dark:#712530;
+    --brass:#A9814A; --brass-light:#CBA876; --clay:#6B5D5A; --line:rgba(42,27,34,0.13);
+    --success:#4C7A5A; --error:#B23A3A;
+    --font-display:'Bodoni Moda',serif; --font-body:'Jost',sans-serif; --font-mono:'Space Mono',monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; overflow-x:hidden; }
+  body{ font-family:var(--font-body); background:var(--vellum); color:var(--ink); line-height:1.5; }
+  h1,h2{ font-family:var(--font-display); font-weight:600; margin:0; }
+  button{ font-family:inherit; cursor:pointer; }
+  input,select{ font-family:var(--font-body); }
+  :focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+
+  header{ background:var(--ink); color:var(--vellum); padding:18px 28px; display:flex; align-items:center; justify-content:space-between; }
+  .logo{ font-family:var(--font-display); font-size:20px; display:flex; align-items:center; gap:8px; }
+  .logo-dot{ width:8px; height:8px; border-radius:50%; background:var(--rouge); }
+  .logo-sub{ font-family:var(--font-mono); font-size:11px; color:var(--brass-light); letter-spacing:0.05em; text-transform:uppercase; }
+
+  /* ---- Login gate ---- */
+  #loginScreen{ max-width:360px; margin:14vh auto; padding:0 24px; text-align:center; }
+  #loginScreen h1{ font-size:26px; margin-bottom:8px; }
+  #loginScreen p{ color:var(--clay); font-size:14px; margin-bottom:24px; }
+  #loginScreen input{ width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:3px; font-size:14px; margin-bottom:12px; background:var(--vellum-2); }
+  #loginScreen button{ width:100%; padding:12px; background:var(--rouge); color:var(--vellum); border:none; border-radius:999px; font-size:14.5px; }
+  #loginScreen button:hover{ background:var(--rouge-dark); }
+  #loginError{ color:var(--error); font-size:13px; margin-top:10px; min-height:16px; }
+
+  /* ---- Dashboard ---- */
+  #dashboard{ display:none; max-width:1100px; margin:0 auto; padding:28px 24px 60px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:28px; border-bottom:1px solid var(--line); }
+  .tab{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; text-transform:uppercase; padding:10px 4px; margin-right:20px; background:none; border:none; border-bottom:2px solid transparent; color:var(--clay); }
+  .tab.is-active{ color:var(--ink); border-bottom-color:var(--rouge); }
+  .panel{ display:none; }
+  .panel.is-active{ display:block; }
+
+  .card{ background:var(--vellum-2); border:1px solid var(--line); border-radius:4px; padding:22px; margin-bottom:24px; }
+  .card h2{ font-size:18px; margin-bottom:16px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--clay); padding:8px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td{ padding:10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td{ border-bottom:none; }
+  .muted{ color:var(--clay); font-size:12px; }
+  .mono{ font-family:var(--font-mono); }
+  .empty-row td{ text-align:center; color:var(--clay); padding:30px; }
+
+  .badge{ display:inline-block; padding:3px 9px; border-radius:999px; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; }
+  .badge-active{ background:rgba(76,122,90,0.15); color:var(--success); }
+  .badge-inactive{ background:rgba(178,58,58,0.12); color:var(--error); }
+
+  .btn{ font-family:var(--font-body); font-size:12.5px; padding:7px 14px; border-radius:999px; border:1px solid var(--ink); background:transparent; color:var(--ink); }
+  .btn:hover{ background:var(--ink); color:var(--vellum); }
+  .btn-primary{ background:var(--rouge); color:var(--vellum); border:none; padding:12px 26px; border-radius:999px; font-size:14px; }
+  .btn-primary:hover{ background:var(--rouge-dark); }
+  .btn-load-more{ display:block; margin:16px auto 0; }
+  .stripe-link{ color:var(--brass); font-size:12px; text-decoration:none; }
+  .stripe-link:hover{ text-decoration:underline; }
+
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+  .form-grid.full{ grid-template-columns:1fr; }
+  @media (max-width:640px){ .form-grid{ grid-template-columns:1fr; } }
+  label{ display:flex; flex-direction:column; gap:6px; font-size:12px; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.03em; color:var(--clay); }
+  input, select{ padding:10px 12px; border:1px solid var(--line); border-radius:3px; font-size:14px; background:var(--vellum); }
+  .discount-toggle{ display:flex; gap:8px; margin-bottom:14px; }
+  .discount-toggle button{ flex:1; padding:9px; border:1px solid var(--line); background:var(--vellum); border-radius:3px; font-size:13px; color:var(--clay); }
+  .discount-toggle button.is-active{ border-color:var(--rouge); color:var(--rouge); background:rgba(140,47,57,0.06); }
+  #formMsg{ font-size:13px; margin-top:10px; min-height:16px; }
+  #formMsg.is-error{ color:var(--error); }
+  #formMsg.is-success{ color:var(--success); }
+
+  .tracking-box{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
+  .tracking-box select, .tracking-box input{ font-size:11.5px; padding:5px 6px; }
+  .tracking-box .btn{ font-size:11px; padding:5px 10px; align-self:flex-start; }
+  .tr-msg{ font-size:11px; margin:2px 0 0; min-height:13px; }
+
+  .loading{ text-align:center; padding:30px; color:var(--clay); font-size:13.5px; }
+  .note{ font-size:12px; color:var(--clay); margin-top:10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NUANCE<span class="logo-dot"></span></div>
+  <div class="logo-sub">Administration</div>
+</header>
+
+<div id="loginScreen">
+  <h1>Administration</h1>
+  <p>Entre le mot de passe pour accéder aux commandes et aux codes promo.</p>
+  <input type="password" id="passwordInput" placeholder="Mot de passe" autocomplete="off">
+  <button onclick="login()">Se connecter</button>
+  <p id="loginError"></p>
+  <button id="demoLink" onclick="loadDemo()" style="background:none;border:none;color:var(--clay);font-size:12.5px;text-decoration:underline;margin-top:18px;padding:0;">Voir un aperçu avec des données d'exemple</button>
+</div>
+
+<div id="dashboard">
+  <div id="demoBanner" style="display:none; background:var(--brass); color:var(--ink); font-family:var(--font-mono); font-size:12px; text-align:center; padding:9px; letter-spacing:0.03em; text-transform:uppercase; margin:-28px -24px 24px;">
+    Mode démonstration — données fictives, non connecté à Stripe
+  </div>
+
+  <div class="tabs">
+    <button class="tab is-active" onclick="setAdminTab('orders', this)">Commandes</button>
+    <button class="tab" onclick="setAdminTab('promos', this)">Codes promo</button>
+  </div>
+
+  <div class="panel is-active" id="panel-orders">
+    <div class="card">
+      <h2>Commandes récentes</h2>
+      <div id="ordersContainer"><div class="loading">Chargement…</div></div>
+      <button class="btn btn-load-more" id="loadMoreBtn" onclick="loadOrders(true)" style="display:none;">Charger plus</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-promos">
+    <div class="card">
+      <h2>Nouveau code partenaire</h2>
+      <div class="form-grid">
+        <label>Code
+          <input type="text" id="fCode" placeholder="SQUEEZIE10" style="text-transform:uppercase;">
+        </label>
+        <label>Partenaire
+          <input type="text" id="fPartner" placeholder="Squeezie">
+        </label>
+      </div>
+      <div class="discount-toggle">
+        <button type="button" id="discPercentBtn" class="is-active" onclick="setDiscountType('percent')">Pourcentage</button>
+        <button type="button" id="discAmountBtn" onclick="setDiscountType('amount')">Montant fixe (€)</button>
+      </div>
+      <div class="form-grid">
+        <label><span id="discValueLabel">Réduction (%)</span>
+          <input type="number" id="fDiscountValue" placeholder="15" min="0" step="0.01">
+        </label>
+        <label>Utilisations max (optionnel)
+          <input type="number" id="fMaxRedemptions" placeholder="Illimité" min="1">
+        </label>
+      </div>
+      <div class="form-grid">
+        <label>Affichage — début
+          <input type="datetime-local" id="fDisplayStart">
+        </label>
+        <label>Affichage — fin
+          <input type="datetime-local" id="fDisplayEnd">
+        </label>
+      </div>
+      <p class="note">Le code fonctionne dès sa création si quelqu'un le connaît. La fenêtre ci-dessus contrôle uniquement quand le bandeau apparaît automatiquement sur le site. Passé la date de fin, le code cesse aussi de fonctionner au paiement.</p>
+      <button class="btn-primary" onclick="createPromo()" style="margin-top:16px;">Créer le code</button>
+      <p id="formMsg"></p>
+    </div>
+
+    <div class="card">
+      <h2>Codes existants</h2>
+      <div id="promosContainer"><div class="loading">Chargement…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let adminPassword = '';
+  let lastOrderId = null;
+
+  let isDemo = false;
+
+  function login(){
+    const input = document.getElementById('passwordInput');
+    adminPassword = input.value;
+    const err = document.getElementById('loginError');
+    err.textContent = '';
+    fetch('/api/admin/promos', { headers: { 'x-admin-password': adminPassword } })
+      .then(res => {
+        if (res.status === 401){
+          err.textContent = 'Mot de passe incorrect.';
+          adminPassword = '';
+          return;
+        }
+        isDemo = false;
+        document.getElementById('demoBanner').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadOrders(false);
+        loadPromos();
+      })
+      .catch(() => {
+        err.textContent = "Impossible de contacter le serveur — le backend est-il déployé (/api) ?";
+      });
+  }
+
+  function loadDemo(){
+    isDemo = true;
+    document.getElementById('demoBanner').style.display = 'block';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    const demoOrders = [
+      { id: 'demo_1', paymentIntentId: 'pi_demo_1', date: '2026-07-22T16:42:00Z', email: 'camille.dupont@example.com', name: 'Camille Dupont', address: "14 rue des Lilas, 69003 Lyon, FR", items: [{ name: 'Palette Ombres Golden Hour', qty: 1 }, { name: 'Rouge à Lèvres Mat Terracotta', qty: 2 }], total: 74.70, promoUsed: true, trackingCarrier: 'Colissimo', trackingNumber: '6A12345678901', stripeUrl: '#' },
+      { id: 'demo_2', paymentIntentId: 'pi_demo_2', date: '2026-07-21T09:15:00Z', email: 'lea.martin@example.com', name: 'Léa Martin', address: "8 avenue Foch, 92100 Boulogne-Billancourt, FR", items: [{ name: 'Sérum Vitamine C Éclat', qty: 1 }], total: 29.90, promoUsed: false, trackingCarrier: '', trackingNumber: '', stripeUrl: '#' },
+      { id: 'demo_3', paymentIntentId: 'pi_demo_3', date: '2026-07-19T18:03:00Z', email: 'ines.b@example.com', name: 'Inès Benali', address: "3 rue du Port, 44000 Nantes, FR", items: [{ name: 'Mascara Volume Waterproof', qty: 1 }, { name: 'Baume à Lèvres Hydratant', qty: 1 }], total: 31.80, promoUsed: false, trackingCarrier: '', trackingNumber: '', stripeUrl: '#' }
+    ];
+    document.getElementById('ordersContainer').innerHTML =
+      '<table><thead><tr><th>Date</th><th>Client</th><th>Articles</th><th>Adresse</th><th>Total</th><th></th></tr></thead><tbody>' +
+      demoOrders.map(orderRow).join('') +
+      '</tbody></table>';
+    document.getElementById('loadMoreBtn').style.display = 'none';
+
+    const demoPromos = [
+      { id: 'demo_p1', code: 'SQUEEZIE10', active: true, partner: 'Squeezie', displayStart: '2026-08-01T18:00:00', displayEnd: '2026-08-08T23:59:00', discount: '-15 %', timesRedeemed: 0, maxRedemptions: 500 },
+      { id: 'demo_p2', code: 'BIENVENUE10', active: true, partner: '', displayStart: '', displayEnd: '', discount: '-10 %', timesRedeemed: 128, maxRedemptions: null }
+    ];
+    document.getElementById('promosContainer').innerHTML =
+      '<table><thead><tr><th>Code</th><th>Partenaire</th><th>Réduction</th><th>Fenêtre d\'affichage</th><th>Utilisations</th><th>Statut</th><th></th></tr></thead><tbody>' +
+      demoPromos.map(promoRow).join('') +
+      '</tbody></table>';
+  }
+
+  document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') login();
+  });
+
+  function setAdminTab(name, btn){
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('is-active'));
+    document.getElementById('panel-' + name).classList.add('is-active');
+  }
+
+  function fmtEuro(n){ return Number(n).toFixed(2).replace('.', ',') + ' €'; }
+  function fmtDate(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function orderRow(o){
+    const items = o.items.map(i => i.qty + '× ' + i.name).join('<br>');
+    const escAttr = (s) => String(s || '').replace(/"/g, '&quot;');
+    const carriers = ['Colissimo', 'Chronopost', 'Mondial Relay', 'DHL', 'UPS', 'Autre'];
+    const carrierOptions = '<option value="">Transporteur</option>' + carriers.map(c =>
+      '<option value="' + c + '"' + (o.trackingCarrier === c ? ' selected' : '') + '>' + c + '</option>'
+    ).join('');
+    return '<tr>' +
+      '<td>' + fmtDate(o.date) + '</td>' +
+      '<td>' + (o.name || '—') + '<br><span class="muted">' + (o.email || '') + '</span></td>' +
+      '<td>' + items + (o.promoUsed ? '<br><span class="muted">Code promo utilisé</span>' : '') + '</td>' +
+      '<td>' + (o.address || '<span class="muted">Non fournie</span>') + '</td>' +
+      '<td class="mono">' + fmtEuro(o.total) + '</td>' +
+      '<td>' +
+        '<div class="tracking-box" data-pi="' + escAttr(o.paymentIntentId) + '" data-email="' + escAttr(o.email) + '" data-name="' + escAttr(o.name) + '">' +
+          '<select class="tr-carrier">' + carrierOptions + '</select>' +
+          '<input type="text" class="tr-number" placeholder="N° de suivi" value="' + escAttr(o.trackingNumber) + '">' +
+          '<button class="btn tr-save" onclick="saveTracking(this)">' + (o.trackingNumber ? 'Modifier' : 'Enregistrer') + '</button>' +
+          '<p class="tr-msg"></p>' +
+        '</div>' +
+      '</td>' +
+      '<td><a class="stripe-link" href="' + o.stripeUrl + '" target="_blank" rel="noopener">Voir sur Stripe →</a></td>' +
+    '</tr>';
+  }
+
+  function saveTracking(btn){
+    const box = btn.closest('.tracking-box');
+    const carrier = box.querySelector('.tr-carrier').value;
+    const number = box.querySelector('.tr-number').value.trim();
+    const msg = box.querySelector('.tr-msg');
+
+    if (!number){
+      msg.textContent = 'Numéro requis.';
+      msg.style.color = 'var(--error)';
+      return;
+    }
+    if (isDemo){
+      msg.textContent = 'Mode démonstration — aucune action réelle.';
+      msg.style.color = 'var(--error)';
+      return;
+    }
+
+    btn.disabled = true;
+    fetch('/api/admin/tracking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: JSON.stringify({
+        paymentIntentId: box.dataset.pi,
+        carrier,
+        trackingNumber: number,
+        customerEmail: box.dataset.email,
+        customerName: box.dataset.name
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        if (data.error){ msg.textContent = data.error; msg.style.color = 'var(--error)'; return; }
+        msg.textContent = 'Enregistré, client notifié par email.';
+        msg.style.color = 'var(--success)';
+        btn.textContent = 'Modifier';
+      })
+      .catch(() => {
+        btn.disabled = false;
+        msg.textContent = 'Erreur réseau.';
+        msg.style.color = 'var(--error)';
+      });
+  }
+
+  function loadOrders(append){
+    const container = document.getElementById('ordersContainer');
+    if (!append) container.innerHTML = '<div class="loading">Chargement…</div>';
+    const url = '/api/admin/orders' + (append && lastOrderId ? '?starting_after=' + lastOrderId : '');
+    fetch(url, { headers: { 'x-admin-password': adminPassword } })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error){ container.innerHTML = '<div class="loading">' + data.error + '</div>'; return; }
+        const rows = data.orders.map(orderRow).join('');
+        const table = '<table><thead><tr><th>Date</th><th>Client</th><th>Articles</th><th>Adresse</th><th>Total</th><th>Suivi</th><th></th></tr></thead><tbody>' +
+          (rows || '<tr class="empty-row"><td colspan="7">Aucune commande pour le moment.</td></tr>') +
+          '</tbody></table>';
+        if (append) container.innerHTML += table; else container.innerHTML = table;
+        lastOrderId = data.lastId;
+        document.getElementById('loadMoreBtn').style.display = data.hasMore ? 'block' : 'none';
+      })
+      .catch(() => {
+        container.innerHTML = '<div class="loading">Impossible de charger les commandes — le backend (/api) est-il déployé ?</div>';
+      });
+  }
+
+  function promoRow(p){
+    const window_ = (p.displayStart ? fmtDate(p.displayStart) : '—') + ' → ' + (p.displayEnd ? fmtDate(p.displayEnd) : '—');
+    const usage = p.maxRedemptions ? p.timesRedeemed + ' / ' + p.maxRedemptions : p.timesRedeemed + ' (illimité)';
+    return '<tr>' +
+      '<td class="mono">' + p.code + '</td>' +
+      '<td>' + (p.partner || '<span class="muted">—</span>') + '</td>' +
+      '<td class="mono">' + p.discount + '</td>' +
+      '<td>' + window_ + '</td>' +
+      '<td>' + usage + '</td>' +
+      '<td><span class="badge ' + (p.active ? 'badge-active' : 'badge-inactive') + '">' + (p.active ? 'Actif' : 'Inactif') + '</span></td>' +
+      '<td><button class="btn" onclick="togglePromo(\'' + p.id + '\', ' + (!p.active) + ', this)">' + (p.active ? 'Désactiver' : 'Activer') + '</button></td>' +
+    '</tr>';
+  }
+
+  function loadPromos(){
+    const container = document.getElementById('promosContainer');
+    container.innerHTML = '<div class="loading">Chargement…</div>';
+    fetch('/api/admin/promos', { headers: { 'x-admin-password': adminPassword } })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error){ container.innerHTML = '<div class="loading">' + data.error + '</div>'; return; }
+        const rows = data.promos.map(promoRow).join('');
+        container.innerHTML = '<table><thead><tr><th>Code</th><th>Partenaire</th><th>Réduction</th><th>Fenêtre d\'affichage</th><th>Utilisations</th><th>Statut</th><th></th></tr></thead><tbody>' +
+          (rows || '<tr class="empty-row"><td colspan="7">Aucun code pour le moment.</td></tr>') +
+          '</tbody></table>';
+      })
+      .catch(() => {
+        container.innerHTML = '<div class="loading">Impossible de charger les codes — le backend (/api) est-il déployé ?</div>';
+      });
+  }
+
+  function togglePromo(id, nextActive, btn){
+    if (isDemo){
+      alert("Mode démonstration — aucune action réelle. Connecte-toi avec ton vrai mot de passe pour gérer de vrais codes.");
+      return;
+    }
+    btn.disabled = true;
+    fetch('/api/admin/promos', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: JSON.stringify({ id, active: nextActive })
+    })
+      .then(res => res.json())
+      .then(() => loadPromos())
+      .catch(() => { btn.disabled = false; });
+  }
+
+  let discountType = 'percent';
+  function setDiscountType(type){
+    discountType = type;
+    document.getElementById('discPercentBtn').classList.toggle('is-active', type === 'percent');
+    document.getElementById('discAmountBtn').classList.toggle('is-active', type === 'amount');
+    document.getElementById('discValueLabel').textContent = type === 'percent' ? 'Réduction (%)' : 'Réduction (€)';
+    document.getElementById('fDiscountValue').placeholder = type === 'percent' ? '15' : '5.00';
+  }
+
+  function createPromo(){
+    if (isDemo){
+      const msg = document.getElementById('formMsg');
+      msg.textContent = 'Mode démonstration — connecte-toi avec ton vrai mot de passe pour créer un vrai code.';
+      msg.className = 'is-error';
+      return;
+    }
+    const code = document.getElementById('fCode').value.trim();
+    const partner = document.getElementById('fPartner').value.trim();
+    const value = document.getElementById('fDiscountValue').value;
+    const maxRedemptions = document.getElementById('fMaxRedemptions').value;
+    const displayStart = document.getElementById('fDisplayStart').value;
+    const displayEnd = document.getElementById('fDisplayEnd').value;
+    const msg = document.getElementById('formMsg');
+
+    if (!code || !value){
+      msg.textContent = 'Le code et la réduction sont requis.';
+      msg.className = 'is-error';
+      return;
+    }
+
+    const body = {
+      code, partner,
+      displayStart: displayStart || null,
+      displayEnd: displayEnd || null,
+      maxRedemptions: maxRedemptions || null
+    };
+    if (discountType === 'percent') body.percentOff = value; else body.amountOff = value;
+
+    fetch('/api/admin/promos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: JSON.stringify(body)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error){ msg.textContent = data.error; msg.className = 'is-error'; return; }
+        msg.textContent = 'Code ' + data.code + ' créé.';
+        msg.className = 'is-success';
+        document.getElementById('fCode').value = '';
+        document.getElementById('fPartner').value = '';
+        document.getElementById('fDiscountValue').value = '';
+        document.getElementById('fMaxRedemptions').value = '';
+        document.getElementById('fDisplayStart').value = '';
+        document.getElementById('fDisplayEnd').value = '';
+        loadPromos();
+      })
+      .catch(() => { msg.textContent = 'Erreur réseau.'; msg.className = 'is-error'; });
+  }
+</script>
+</body>
+</html>
